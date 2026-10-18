@@ -1,0 +1,35 @@
+{
+  "command": [
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/src/predict",
+    "--predictor",
+    "pm4",
+    "--instructions",
+    "100000000",
+    "--json",
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/164.gzip/gzip.trace.bz2"
+  ],
+  "finished_utc": "2026-10-15T03:06:29.830672+00:00",
+  "host_elapsed_seconds": 0.531839656000102,
+  "host_timing_note": "Host process runtime only; not simulated hardware latency or IPC.",
+  "metrics": {
+    "accuracy_pct": 91.7567098717028,
+    "allocations": 1267561,
+    "branch_count": 18299698,
+    "conditional_count": 15114596,
+    "direction_misses": 1245940,
+    "global_hits": 13847035,
+    "global_misses": 1267561,
+    "instructions": 100000000,
+    "logical_storage_bits": 30735,
+    "misprediction_rate_pct": 8.24329012829718,
+    "mpki": 12.4594,
+    "predictor": "pm4",
+    "replacements": 1265513,
+    "schema_version": 1,
+    "trace": "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/164.gzip/gzip.trace.bz2"
+  },
+  "returncode": 0,
+  "started_utc": "2026-10-15T03:06:29.298810+00:00",
+  "stderr": "",
+  "stdout": "{\n  \"schema_version\": 1,\n  \"predictor\": \"pm4\",\n  \"trace\": \"/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/164.gzip/gzip.trace.bz2\",\n  \"instructions\": 100000000,\n  \"branch_count\": 18299698,\n  \"conditional_count\": 15114596,\n  \"direction_misses\": 1245940,\n  \"accuracy_pct\": 91.7567098717028,\n  \"misprediction_rate_pct\": 8.24329012829718,\n  \"mpki\": 12.4594,\n  \"logical_storage_bits\": 30735,\n  \"global_hits\": 13847035,\n  \"global_misses\": 1267561,\n  \"allocations\": 1267561,\n  \"replacements\": 1265513\n}\n"
+}

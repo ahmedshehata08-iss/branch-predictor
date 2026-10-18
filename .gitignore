@@ -1,0 +1,5 @@
+src/predict
+tests/test_predictor
+tests/test_predictor_sanitize
+__pycache__/
+*.pyc

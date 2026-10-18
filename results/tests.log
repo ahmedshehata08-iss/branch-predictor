@@ -1,0 +1,7 @@
+make: Entering directory '/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/src'
+g++ -std=c++17 -O3 -Wall -Wextra -Wpedantic -I. -o ../tests/test_predictor ../tests/test_predictor.cc
+../tests/test_predictor
+PASS: 9 test groups; 2311268 assertions; 24,000 PM reference events; 16,000 gshare reference events.
+python3 ../tests/test_driver.py
+PASS: 7 driver integration checks (metrics, plain/compressed input, quoting, missing/empty/truncated/damaged files)
+make: Leaving directory '/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/src'

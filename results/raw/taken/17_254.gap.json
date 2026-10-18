@@ -1,0 +1,35 @@
+{
+  "command": [
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/src/predict",
+    "--predictor",
+    "taken",
+    "--instructions",
+    "100000000",
+    "--json",
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/254.gap/gap.trace.bz2"
+  ],
+  "finished_utc": "2026-10-15T03:06:45.909493+00:00",
+  "host_elapsed_seconds": 0.401271326999904,
+  "host_timing_note": "Host process runtime only; not simulated hardware latency or IPC.",
+  "metrics": {
+    "accuracy_pct": 45.11474564933,
+    "allocations": 0,
+    "branch_count": 19762650,
+    "conditional_count": 13838041,
+    "direction_misses": 7595044,
+    "global_hits": 0,
+    "global_misses": 0,
+    "instructions": 100000000,
+    "logical_storage_bits": 0,
+    "misprediction_rate_pct": 54.88525435067,
+    "mpki": 75.95044,
+    "predictor": "taken",
+    "replacements": 0,
+    "schema_version": 1,
+    "trace": "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/254.gap/gap.trace.bz2"
+  },
+  "returncode": 0,
+  "started_utc": "2026-10-15T03:06:45.508213+00:00",
+  "stderr": "",
+  "stdout": "{\n  \"schema_version\": 1,\n  \"predictor\": \"taken\",\n  \"trace\": \"/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/254.gap/gap.trace.bz2\",\n  \"instructions\": 100000000,\n  \"branch_count\": 19762650,\n  \"conditional_count\": 13838041,\n  \"direction_misses\": 7595044,\n  \"accuracy_pct\": 45.11474564933,\n  \"misprediction_rate_pct\": 54.88525435067,\n  \"mpki\": 75.95044,\n  \"logical_storage_bits\": 0,\n  \"global_hits\": 0,\n  \"global_misses\": 0,\n  \"allocations\": 0,\n  \"replacements\": 0\n}\n"
+}

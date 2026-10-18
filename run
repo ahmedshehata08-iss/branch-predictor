@@ -1,0 +1,17 @@
+#!/usr/bin/env python3
+"""Portable replacement for the supplied csh runner.
+
+./run traces [--jobs 2] runs the default five-predictor comparison.
+Additional arguments are forwarded to scripts/run_experiments.py.
+"""
+import pathlib
+import subprocess
+import sys
+
+root = pathlib.Path(__file__).resolve().parent
+arguments = sys.argv[1:]
+if arguments and not arguments[0].startswith("-"):
+    arguments = ["--trace-dir", arguments[0]] + arguments[1:]
+raise SystemExit(subprocess.call(
+    [sys.executable, str(root / "scripts" / "run_experiments.py")] + arguments
+))

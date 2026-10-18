@@ -1,0 +1,9 @@
+make: Entering directory '/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/src'
+g++ -std=c++17 -O1 -g -Wall -Wextra -Wpedantic -fsanitize=address,undefined -fno-omit-frame-pointer -I. -o ../tests/test_predictor_sanitize ../tests/test_predictor.cc
+../tests/test_predictor_sanitize
+==34==Can't open /proc/33/task for reading.
+==33==LeakSanitizer has encountered a fatal error.
+==33==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==33==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+make: *** [Makefile:20: sanitize] Error 1
+make: Leaving directory '/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/src'

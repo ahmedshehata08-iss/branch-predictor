@@ -1,0 +1,35 @@
+{
+  "command": [
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/src/predict",
+    "--predictor",
+    "pm4",
+    "--instructions",
+    "100000000",
+    "--json",
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/209.db/db.trace.bz2"
+  ],
+  "finished_utc": "2026-10-15T03:06:39.035489+00:00",
+  "host_elapsed_seconds": 0.4457237569999961,
+  "host_timing_note": "Host process runtime only; not simulated hardware latency or IPC.",
+  "metrics": {
+    "accuracy_pct": 96.7533772950863,
+    "allocations": 735155,
+    "branch_count": 19347133,
+    "conditional_count": 13191770,
+    "direction_misses": 428287,
+    "global_hits": 12456615,
+    "global_misses": 735155,
+    "instructions": 100000000,
+    "logical_storage_bits": 30735,
+    "misprediction_rate_pct": 3.24662270491375,
+    "mpki": 4.28287,
+    "predictor": "pm4",
+    "replacements": 733107,
+    "schema_version": 1,
+    "trace": "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/209.db/db.trace.bz2"
+  },
+  "returncode": 0,
+  "started_utc": "2026-10-15T03:06:38.589757+00:00",
+  "stderr": "",
+  "stdout": "{\n  \"schema_version\": 1,\n  \"predictor\": \"pm4\",\n  \"trace\": \"/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/209.db/db.trace.bz2\",\n  \"instructions\": 100000000,\n  \"branch_count\": 19347133,\n  \"conditional_count\": 13191770,\n  \"direction_misses\": 428287,\n  \"accuracy_pct\": 96.7533772950863,\n  \"misprediction_rate_pct\": 3.24662270491375,\n  \"mpki\": 4.28287,\n  \"logical_storage_bits\": 30735,\n  \"global_hits\": 12456615,\n  \"global_misses\": 735155,\n  \"allocations\": 735155,\n  \"replacements\": 733107\n}\n"
+}

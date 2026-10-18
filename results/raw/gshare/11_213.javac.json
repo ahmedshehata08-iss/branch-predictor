@@ -1,0 +1,35 @@
+{
+  "command": [
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/src/predict",
+    "--predictor",
+    "gshare",
+    "--instructions",
+    "100000000",
+    "--json",
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/213.javac/javac.trace.bz2"
+  ],
+  "finished_utc": "2026-10-15T03:06:39.951023+00:00",
+  "host_elapsed_seconds": 0.20287138799994864,
+  "host_timing_note": "Host process runtime only; not simulated hardware latency or IPC.",
+  "metrics": {
+    "accuracy_pct": 98.2547000587452,
+    "allocations": 0,
+    "branch_count": 15427534,
+    "conditional_count": 12986593,
+    "direction_misses": 226655,
+    "global_hits": 0,
+    "global_misses": 0,
+    "instructions": 100000000,
+    "logical_storage_bits": 65551,
+    "misprediction_rate_pct": 1.7452999412548,
+    "mpki": 2.26655,
+    "predictor": "gshare",
+    "replacements": 0,
+    "schema_version": 1,
+    "trace": "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/213.javac/javac.trace.bz2"
+  },
+  "returncode": 0,
+  "started_utc": "2026-10-15T03:06:39.748142+00:00",
+  "stderr": "",
+  "stdout": "{\n  \"schema_version\": 1,\n  \"predictor\": \"gshare\",\n  \"trace\": \"/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/213.javac/javac.trace.bz2\",\n  \"instructions\": 100000000,\n  \"branch_count\": 15427534,\n  \"conditional_count\": 12986593,\n  \"direction_misses\": 226655,\n  \"accuracy_pct\": 98.2547000587452,\n  \"misprediction_rate_pct\": 1.7452999412548,\n  \"mpki\": 2.26655,\n  \"logical_storage_bits\": 65551,\n  \"global_hits\": 0,\n  \"global_misses\": 0,\n  \"allocations\": 0,\n  \"replacements\": 0\n}\n"
+}

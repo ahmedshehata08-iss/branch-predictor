@@ -1,0 +1,35 @@
+{
+  "command": [
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/src/predict",
+    "--predictor",
+    "pm4",
+    "--instructions",
+    "100000000",
+    "--json",
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/222.mpegaudio/mpegaudio.trace.bz2"
+  ],
+  "finished_utc": "2026-10-15T03:06:40.492777+00:00",
+  "host_elapsed_seconds": 0.3846697129997665,
+  "host_timing_note": "Host process runtime only; not simulated hardware latency or IPC.",
+  "metrics": {
+    "accuracy_pct": 98.1940227498146,
+    "allocations": 994567,
+    "branch_count": 15371661,
+    "conditional_count": 13021205,
+    "direction_misses": 235160,
+    "global_hits": 12026638,
+    "global_misses": 994567,
+    "instructions": 100000000,
+    "logical_storage_bits": 30735,
+    "misprediction_rate_pct": 1.80597725018537,
+    "mpki": 2.3516,
+    "predictor": "pm4",
+    "replacements": 992519,
+    "schema_version": 1,
+    "trace": "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/222.mpegaudio/mpegaudio.trace.bz2"
+  },
+  "returncode": 0,
+  "started_utc": "2026-10-15T03:06:40.108098+00:00",
+  "stderr": "",
+  "stdout": "{\n  \"schema_version\": 1,\n  \"predictor\": \"pm4\",\n  \"trace\": \"/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/traces/222.mpegaudio/mpegaudio.trace.bz2\",\n  \"instructions\": 100000000,\n  \"branch_count\": 15371661,\n  \"conditional_count\": 13021205,\n  \"direction_misses\": 235160,\n  \"accuracy_pct\": 98.1940227498146,\n  \"misprediction_rate_pct\": 1.80597725018537,\n  \"mpki\": 2.3516,\n  \"logical_storage_bits\": 30735,\n  \"global_hits\": 12026638,\n  \"global_misses\": 994567,\n  \"allocations\": 994567,\n  \"replacements\": 992519\n}\n"
+}

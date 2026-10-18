@@ -1,0 +1,188 @@
+{
+  "build_command": [
+    "make",
+    "-C",
+    "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2/src",
+    "predict"
+  ],
+  "completed_experiments": 100,
+  "environment": {
+    "bzip2": "bzip2, a block-sorting file compressor.  Version 1.0.8, 13-Jul-2019.",
+    "compiler": "g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0",
+    "cpu_count": 9,
+    "machine": "x86_64",
+    "make": "GNU Make 4.3",
+    "platform": "Linux-6.18.44-x86_64-with-glibc2.39",
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]"
+  },
+  "executable_sha256": "ed67b76eda23c021d3670d3bf573ab8dd26fbf861247d2e9986b3df7a21cb174",
+  "experiment_count": 100,
+  "finished_utc": "2026-10-15T03:06:48.746204+00:00",
+  "instruction_count_source": "User-specified fixed denominator; default is the distributed benchmark's documented 100 million instructions per trace.",
+  "instructions_per_trace": 100000000,
+  "invocation": [
+    "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/bin/python3",
+    "scripts/run_experiments.py",
+    "--jobs",
+    "2",
+    "--output",
+    "results"
+  ],
+  "jobs": 2,
+  "metric_formulas": {
+    "accuracy_pct": "100 * (sum(conditional_count) - sum(direction_misses)) / sum(conditional_count)",
+    "aggregate_mpki": "1000 * sum(direction_misses) / sum(instructions)",
+    "mean_trace_accuracy_pct": "unweighted arithmetic mean of per-trace accuracy; differs from branch-weighted aggregate accuracy",
+    "mean_trace_mpki": "arithmetic mean of per-trace MPKI; equals aggregate MPKI when all trace instruction counts are equal",
+    "misprediction_rate_pct": "100 * sum(direction_misses) / sum(conditional_count)"
+  },
+  "predictors": [
+    "pm2",
+    "pm4",
+    "bimodal",
+    "gshare",
+    "taken"
+  ],
+  "process_isolation": "Fresh driver process and cold predictor state for every predictor/trace pair.",
+  "runner_sha256": "0ea94df5d4553085e0565bf74e35e4e623814bd6aec8f62ae86b378e618c71a7",
+  "schema_version": 1,
+  "source_root": "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2",
+  "source_sha256": {
+    "src/Makefile": "16d6b708f1f1589729e7b4f0c0bee3077abf5a308e8058c655f90f66e39c85cb",
+    "src/branch.h": "44fe3e8c1799dfe50e1c1b24fd722b2730b2a70c0743275131223f7b5d9c5dc5",
+    "src/my_predictor.h": "00048cf261480d6e2efcb7e6c2de742be10bf759adc16e031092ca1029de269a",
+    "src/predict.cc": "862f099eb0dafa268c9396ad7af05ba6e5f72cffd14a1d6fc6373f1626be1800",
+    "src/predictor.h": "24fbd414ddce40c7420d8c924048d5a2723c7a49ff41386494d81fa3e4696d36",
+    "src/trace.cc": "4ccc1526100cc7a2caa552be0b26188db7cd6ec8a160a5313150a004ca7b3f36",
+    "src/trace.h": "2e8a405587a86eda0551ff9c32d48d2b5c031cb4efaf6caac8cd0570db1d80cb"
+  },
+  "started_utc": "2026-10-15T03:06:29.275174+00:00",
+  "status": "complete",
+  "timing_note": "Recorded elapsed seconds are host software process runtimes only; this is not a cycle-accurate simulation.",
+  "trace_count": 20,
+  "trace_order": [
+    "164.gzip/gzip.trace.bz2",
+    "175.vpr/vpr.trace.bz2",
+    "176.gcc/gcc.trace.bz2",
+    "181.mcf/mcf.trace.bz2",
+    "186.crafty/crafty.trace.bz2",
+    "197.parser/parser.trace.bz2",
+    "201.compress/compress.trace.bz2",
+    "202.jess/jess.trace.bz2",
+    "205.raytrace/raytrace.trace.bz2",
+    "209.db/db.trace.bz2",
+    "213.javac/javac.trace.bz2",
+    "222.mpegaudio/mpegaudio.trace.bz2",
+    "227.mtrt/mtrt.trace.bz2",
+    "228.jack/jack.trace.bz2",
+    "252.eon/eon.trace.bz2",
+    "253.perlbmk/perlbmk.trace.bz2",
+    "254.gap/gap.trace.bz2",
+    "255.vortex/vortex.trace.bz2",
+    "256.bzip2/bzip2.trace.bz2",
+    "300.twolf/twolf.trace.bz2"
+  ],
+  "traces": [
+    {
+      "bytes": 556546,
+      "path": "164.gzip/gzip.trace.bz2",
+      "sha256": "cc36c77a0e4ae75bb405d7b1c549b8a487d6b183b94f2e8873a96e99e56af0db"
+    },
+    {
+      "bytes": 595421,
+      "path": "175.vpr/vpr.trace.bz2",
+      "sha256": "e28ff9f09e03aab401e6a5e853fca907b9719dac8d4c11721d538eb4df00a3dc"
+    },
+    {
+      "bytes": 728878,
+      "path": "176.gcc/gcc.trace.bz2",
+      "sha256": "930c3bcd9122f41bb100a735e4d5688c06b1fae6e9b41e8ccb94c42fbaa327a1"
+    },
+    {
+      "bytes": 700144,
+      "path": "181.mcf/mcf.trace.bz2",
+      "sha256": "fed1e23e26367b3c862525a1b86d1914e905376da84724f3754b26e9f48e907e"
+    },
+    {
+      "bytes": 380671,
+      "path": "186.crafty/crafty.trace.bz2",
+      "sha256": "c80df6038b652612bf4828703c3d28099f662a5815334b39668fadf178466282"
+    },
+    {
+      "bytes": 489965,
+      "path": "197.parser/parser.trace.bz2",
+      "sha256": "8d05fb442629d75129fc92a515424ef8b7744052aa64049d1f38e2bbb663fbb2"
+    },
+    {
+      "bytes": 372848,
+      "path": "201.compress/compress.trace.bz2",
+      "sha256": "ad1b7e5bfae1c110c9a1feaff537ed45a3c9e11104af80629ef9fc44c0360f89"
+    },
+    {
+      "bytes": 305527,
+      "path": "202.jess/jess.trace.bz2",
+      "sha256": "7203251de61d5d53cc92e3b86463469f67703db5d4c3c74c6b1c003219464c95"
+    },
+    {
+      "bytes": 424956,
+      "path": "205.raytrace/raytrace.trace.bz2",
+      "sha256": "c6637f509646650d84d9c3cf667e19d5dd3e9214d0824fbb0348553120260a9a"
+    },
+    {
+      "bytes": 259649,
+      "path": "209.db/db.trace.bz2",
+      "sha256": "da3b9c478af685820984c5a453d5af820e39756e2714eec0fb99cfece6c3f717"
+    },
+    {
+      "bytes": 224783,
+      "path": "213.javac/javac.trace.bz2",
+      "sha256": "9aef2999c1ff2235f2e4e36b981634f03f4320884874474792ed1455aa5e1e9d"
+    },
+    {
+      "bytes": 185140,
+      "path": "222.mpegaudio/mpegaudio.trace.bz2",
+      "sha256": "029db439cbc675bb418d727d2f652d0b940c7ed53dd1c5e03134a2fbe0355f4d"
+    },
+    {
+      "bytes": 341515,
+      "path": "227.mtrt/mtrt.trace.bz2",
+      "sha256": "1818a92340cbeb043410b010ad2aa4f93da2eb15c5c76b809fa07e6b901f22ab"
+    },
+    {
+      "bytes": 392655,
+      "path": "228.jack/jack.trace.bz2",
+      "sha256": "60f3b846e035b170620af8ee7b57bc6f7de75a52ee5a7dad8ea9873202f04148"
+    },
+    {
+      "bytes": 118386,
+      "path": "252.eon/eon.trace.bz2",
+      "sha256": "847e3c5be5ae184710f1ad6282142cfc4a383049cab37083b79e3e28c712106f"
+    },
+    {
+      "bytes": 395624,
+      "path": "253.perlbmk/perlbmk.trace.bz2",
+      "sha256": "c734b92885ac9fb9d08cea54a413c6131c2b7c46d856a7db298c33164778a4af"
+    },
+    {
+      "bytes": 244365,
+      "path": "254.gap/gap.trace.bz2",
+      "sha256": "44444cd398e4a08527a46b2408721439dc19a0bc188ba1e2b8b73fbf916daa4b"
+    },
+    {
+      "bytes": 170242,
+      "path": "255.vortex/vortex.trace.bz2",
+      "sha256": "2a9f9bc1edad81ee00248524b97ec6f374ffd8631aec63a66eaabb12986b6936"
+    },
+    {
+      "bytes": 34914,
+      "path": "256.bzip2/bzip2.trace.bz2",
+      "sha256": "0a24cab7100fc7d065f5b79ec8758e8c72950d30fd0d25bba95ee06f9ae7c111"
+    },
+    {
+      "bytes": 780682,
+      "path": "300.twolf/twolf.trace.bz2",
+      "sha256": "817b632c61a62de910eda32193e7ae3960ea8babf113499fea850e8eb3b33005"
+    }
+  ],
+  "working_directory": "/workspace/scratch/12067de93c3e/work/cbp2-infrastructure-v2"
+}
