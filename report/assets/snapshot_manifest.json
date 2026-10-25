@@ -1,0 +1,114 @@
+[
+  {
+    "asset": "01_state_before.png",
+    "source": "baseline/my_predictor.h",
+    "first_line": 57,
+    "last_line": 67,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "01_state_after.png",
+    "source": "src/my_predictor.h",
+    "first_line": 61,
+    "last_line": 88,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "02_constructor_before.png",
+    "source": "baseline/my_predictor.h",
+    "first_line": 66,
+    "last_line": 67,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "02_constructor_after.png",
+    "source": "src/my_predictor.h",
+    "first_line": 90,
+    "last_line": 112,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "03_predict_before.png",
+    "source": "baseline/my_predictor.h",
+    "first_line": 69,
+    "last_line": 78,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "03_predict_after.png",
+    "source": "src/my_predictor.h",
+    "first_line": 114,
+    "last_line": 138,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "04_update_before.png",
+    "source": "baseline/my_predictor.h",
+    "first_line": 80,
+    "last_line": 82,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "04_update_after.png",
+    "source": "src/my_predictor.h",
+    "first_line": 140,
+    "last_line": 161,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "05_driver_before.png",
+    "source": "baseline/predict.cc",
+    "first_line": 58,
+    "last_line": 67,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "05_driver_after.png",
+    "source": "src/predict.cc",
+    "first_line": 33,
+    "last_line": 53,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "06_runner_before.png",
+    "source": "baseline/run",
+    "first_line": 13,
+    "last_line": 23,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "06_runner_after.png",
+    "source": "run",
+    "first_line": 13,
+    "last_line": 20,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "07_io_before.png",
+    "source": "baseline/trace.cc",
+    "first_line": 426,
+    "last_line": 435,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "07_io_after.png",
+    "source": "src/trace.cc",
+    "first_line": 429,
+    "last_line": 440,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "08_quote_before.png",
+    "source": "baseline/trace.cc",
+    "first_line": 439,
+    "last_line": 447,
+    "display_font_pt": 8.333333333333334
+  },
+  {
+    "asset": "08_quote_after.png",
+    "source": "src/trace.cc",
+    "first_line": 446,
+    "last_line": 460,
+    "display_font_pt": 8.333333333333334
+  }
+]

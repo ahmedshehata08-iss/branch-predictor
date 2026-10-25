@@ -1,0 +1,5 @@
+Author: Ahmed Ahmed
+Run date: 2026-10-25
+Linux-6.18.55-x86_64-with-glibc2.39
+g++ (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0
+Python 3.12.14

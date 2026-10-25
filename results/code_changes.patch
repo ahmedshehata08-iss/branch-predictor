@@ -1,0 +1,536 @@
+--- original/src/my_predictor.h
++++ Ahmed_Ahmed/src/my_predictor.h
+@@ -1,3 +1,12 @@
++// Assignment implementation author: Ahmed Ahmed
++// The supplied gshare example and optional extra-credit stub retain their origin.
++#ifndef AHMED_AHMED_MY_PREDICTOR_H
++#define AHMED_AHMED_MY_PREDICTOR_H
++#include <cstring>
++#include <cstdint>
++#include <stdexcept>
++#include <vector>
++
+ // my_predictor.h
+ // This file contains a sample gshare_predictor class.
+ // It is a simple 32,768-entry gshare with a history length of 15.
+@@ -34,7 +43,7 @@
+ 		return &u;
+ 	}
+ 
+-	void update (branch_update *u, bool taken, unsigned int target) {
++	void update (branch_update *u, bool taken, unsigned int /*target*/) {
+ 		if (bi.br_flags & BR_CONDITIONAL) {
+ 			unsigned char *c = &tab[((gshare_update*)u)->index];
+ 			if (taken) {
+@@ -49,41 +58,140 @@
+ 	}
+ };
+ 
++// Prediction-time lookup information; the driver resolves one branch at a time.
++class pm_update : public branch_update {
++public:
++    bool conditional = false;
++    unsigned int index = 0;   // bimodal index
++    unsigned int row = 0;
++    unsigned int tag = 0;
++    int way = -1;             // -1 means the global lookup missed
++};
++
++// A simplified Pentium M-style hybrid direction predictor.
++// Default mapping follows the assignment diagram: raw IP bits, not IP >> 2.
++class pm_predictor : public branch_predictor {
++public:
++    struct global_entry {
++        bool valid = false;
++        unsigned int tag = 0;
++        unsigned char counter = 1;
++    };
++    struct global_set { global_entry ways[2]; };
++
++    pm_update u;
++    unsigned int history = 0;
++    unsigned int bimodal_mask, row_mask, tag_mask, history_mask;
++    unsigned int tag_bits, pc_shift;
++    std::vector<unsigned char> bimodal;
++    std::vector<global_set> global;
++    std::vector<unsigned char> lru; // next victim if both ways are valid
++
++    explicit pm_predictor(unsigned int bimodal_bits = 12,
++                          unsigned int set_bits = 9,
++                          unsigned int tag_bits_arg = 6,
++                          unsigned int pc_shift_arg = 0) {
++        if (bimodal_bits < 1 || bimodal_bits > 16 ||
++            set_bits < 1 || set_bits > 16 ||
++            tag_bits_arg < 1 || tag_bits_arg > 8 || pc_shift_arg > 31)
++            throw std::invalid_argument("invalid predictor configuration");
++        tag_bits = tag_bits_arg;
++        pc_shift = pc_shift_arg;
++        bimodal_mask = (1u << bimodal_bits) - 1;
++        row_mask = (1u << set_bits) - 1;
++        tag_mask = (1u << tag_bits) - 1;
++        history_mask = (1u << (set_bits + tag_bits)) - 1;
++        bimodal.assign(1u << bimodal_bits, 1); // weakly not taken
++        global.resize(1u << set_bits);       // all entries invalid
++        lru.assign(1u << set_bits, 0);
++    }
++
++    static void train(unsigned char &counter, bool taken) {
++        if (taken && counter < 3) ++counter;
++        if (!taken && counter > 0) --counter;
++    }
++
++    branch_update *predict(branch_info &b) override {
++        u = pm_update();
++        u.conditional = (b.br_flags & BR_CONDITIONAL) != 0;
++        u.target_prediction(0); // target prediction is outside the assignment
++        if (!u.conditional) {
++            u.direction_prediction(true);
++            return &u;
++        }
++        const unsigned int pc = b.address >> pc_shift;
++        u.index = pc & bimodal_mask;
++        const unsigned int hash = (pc ^ history) & history_mask;
++        u.row = (hash >> tag_bits) & row_mask;
++        u.tag = hash & tag_mask;
++        for (int way = 0; way < 2; ++way) {
++            const global_entry &entry = global[u.row].ways[way];
++            if (entry.valid && entry.tag == u.tag) {
++                u.way = way;
++                break;
++            }
++        }
++        const unsigned char counter = (u.way >= 0)
++            ? global[u.row].ways[u.way].counter : bimodal[u.index];
++        u.direction_prediction(counter >= 2);
++        return &u;
++    }
++
++    void update(branch_update *result, bool taken,
++                unsigned int /*target*/) override {
++        const pm_update &lookup = *static_cast<pm_update *>(result);
++        if (!lookup.conditional) return;
++        train(bimodal[lookup.index], taken);
++        int way = lookup.way;
++        if (way < 0) {
++            // Fill an invalid way first; otherwise evict the least recent way.
++            if (!global[lookup.row].ways[0].valid) way = 0;
++            else if (!global[lookup.row].ways[1].valid) way = 1;
++            else way = lru[lookup.row];
++            global_entry &entry = global[lookup.row].ways[way];
++            entry.valid = true;
++            entry.tag = lookup.tag;
++            entry.counter = taken ? 2 : 1; // fresh weak state, no stale bias
++        } else {
++            train(global[lookup.row].ways[way].counter, taken);
++        }
++        lru[lookup.row] = static_cast<unsigned char>(1 - way);
++        history = ((history << 1) | static_cast<unsigned int>(taken))
++                  & history_mask;
++    }
++};
++
++// Controls used only for the comparison experiments.
++class always_taken_predictor : public branch_predictor {
++    branch_update u;
++public:
++    branch_update *predict(branch_info &) override {
++        u.direction_prediction(true);
++        u.target_prediction(0);
++        return &u;
++    }
++};
++
++class bimodal_predictor : public branch_predictor {
++    pm_update u;
++    unsigned char counters[4096];
++public:
++    bimodal_predictor() { std::memset(counters, 1, sizeof(counters)); }
++    branch_update *predict(branch_info &b) override {
++        u.conditional = (b.br_flags & BR_CONDITIONAL) != 0;
++        u.index = b.address & 4095u;
++        u.direction_prediction(!u.conditional || counters[u.index] >= 2);
++        u.target_prediction(0);
++        return &u;
++    }
++    void update(branch_update *result, bool taken, unsigned int) override {
++        const pm_update &lookup = *static_cast<pm_update *>(result);
++        if (lookup.conditional) pm_predictor::train(counters[lookup.index], taken);
++    }
++};
++
+ //
+-// Pentium M hybrid branch predictors
+-// This class implements a simple hybrid branch predictor based on the Pentium M branch outcome prediction units. 
+-// Instead of implementing the complete Pentium M branch outcome predictors, the class below implements a hybrid 
+-// predictor that combines a bimodal predictor and a global predictor. 
+-class pm_update : public branch_update {
+-public:
+-        unsigned int index;
+-};
+-
+-class pm_predictor : public branch_predictor {
+-public:
+-        pm_update u;
+-
+-        pm_predictor (void) {
+-        }
+-
+-        branch_update *predict (branch_info & b) {
+-			
+-			// predict branch outcome
+-            u.direction_prediction (true);
+-			
+-			// predict branch target address
+-            u.target_prediction (0);
+-            
+-			return &u;
+-        }
+-
+-        void update (branch_update *u, bool taken, unsigned int target) {
+-			
+-        }
+-
+-};
+-
+-//
++// Optional extra-credit starter placeholder - not implemented in this submission
+ // Complete Pentium M branch predictors for extra credit
+ // This class implements the complete Pentium M branch prediction units. 
+ // It implements both branch target prediction and branch outcome predicton. 
+@@ -99,15 +207,17 @@
+         cpm_predictor (void) {
+         }
+ 
+-        branch_update *predict (branch_info & b) {
++        branch_update *predict (branch_info & /*b*/) {
+             u.direction_prediction (true);
+             u.target_prediction (0);
+             return &u;
+         }
+ 
+-        void update (branch_update *u, bool taken, unsigned int target) {
+-        }
+-
+-};
+-
+-
++        void update (branch_update *, bool, unsigned int) {
++        }
++
++};
++
++
++
++#endif
+--- original/src/predict.cc
++++ Ahmed_Ahmed/src/predict.cc
+@@ -1,84 +1,66 @@
+-// predict.cc
+-// This file contains the main function.  The program accepts a single 
+-// parameter: the name of a trace file.  It drives the branch predictor
+-// simulation by reading the trace file and feeding the traces one at a time
+-// to the branch predictor.
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h> // in case you want to use e.g. memset
+-#include <assert.h>
+-
++// Assignment implementation author: Ahmed Ahmed
++// CBP2 driver extended with selectable baselines and exact statistics.
++#include <cstdio>
++#include <cstring>
++#include <memory>
+ #include "branch.h"
+ #include "trace.h"
+ #include "predictor.h"
+ #include "my_predictor.h"
+ 
+-int main (int argc, char *argv[]) {
+-
+-	// make sure there is one parameter
+-
+-	if (argc != 2) {
+-		fprintf (stderr, "Usage: %s <filename>.gz\n", argv[0]);
+-		exit (1);
+-	}
+-
+-	// open the trace file for reading
+-
+-	init_trace (argv[1]);
+-
+-	// initialize competitor's branch prediction code
+-
+-	branch_predictor *p = new pm_predictor ();
+-
+-	// some statistics to keep, currently just for conditional branches
+-
+-	long long int 
+-		tmiss = 0, 	// number of target mispredictions
+-		dmiss = 0; 	// number of direction mispredictions
+-
+-	// keep looping until end of file
+-
+-	for (;;) {
+-
+-		// get a trace
+-
+-		trace *t = read_trace ();
+-
+-		// NULL means end of file
+-
+-		if (!t) break;
+-
+-		// send this trace to the competitor's code for prediction
+-
+-		branch_update *u = p->predict (t->bi);
+-
+-		// collect statistics for a conditional branch trace
+-
+-		if (t->bi.br_flags & BR_CONDITIONAL) {
+-
+-			// count a direction misprediction
+-
+-			dmiss += u->direction_prediction () != t->taken;
+-
+-			// count a target misprediction
+-
+-			tmiss += u->target_prediction () != t->target;
+-		}
+-
+-		// update competitor's state
+-
+-		p->update (u, t->taken, t->target);
+-	}
+-
+-	// done reading traces
+-
+-	end_trace ();
+-
+-	// give final mispredictions per kilo-instruction and exit.
+-	// each trace represents exactly 100 million instructions.
+-
+-	printf ("%0.3f MPKI\n", 1000.0 * (dmiss / 1e8));
+-	delete p;
+-	exit (0);
++int main(int argc, char *argv[]) {
++    if (argc < 2 || argc > 4) {
++        std::fprintf(stderr, "Usage: %s TRACE [pm|bimodal|gshare|always_taken] [--stats]\n", argv[0]);
++        return 1;
++    }
++    const char *mode = "pm";
++    bool detailed = false, mode_set = false;
++    for (int i = 2; i < argc; ++i) {
++        if (std::strcmp(argv[i], "--stats") == 0 && !detailed) detailed = true;
++        else if (!mode_set && argv[i][0] != '-') { mode = argv[i]; mode_set = true; }
++        else { std::fprintf(stderr, "Invalid argument: %s\n", argv[i]); return 1; }
++    }
++    std::unique_ptr<branch_predictor> predictor;
++    if (std::strcmp(mode, "pm") == 0) predictor.reset(new pm_predictor());
++    else if (std::strcmp(mode, "bimodal") == 0) predictor.reset(new bimodal_predictor());
++    else if (std::strcmp(mode, "gshare") == 0) predictor.reset(new gshare_predictor());
++    else if (std::strcmp(mode, "always_taken") == 0) predictor.reset(new always_taken_predictor());
++    else { std::fprintf(stderr, "Unknown predictor: %s\n", mode); return 1; }
++    const bool is_pm = std::strcmp(mode, "pm") == 0;
++    unsigned long long branches = 0, conditional = 0, misses = 0;
++    unsigned long long hits = 0, hit_misses = 0, fallback_misses = 0;
++    init_trace(argv[1]);
++    while (trace *t = read_trace()) {
++        branch_update *result = predictor->predict(t->bi);
++        ++branches;
++        if (t->bi.br_flags & BR_CONDITIONAL) {
++            ++conditional;
++            const bool wrong = result->direction_prediction() != t->taken;
++            misses += wrong;
++            if (is_pm) {
++                const bool hit = static_cast<pm_update *>(result)->way >= 0;
++                hits += hit;
++                if (hit) hit_misses += wrong;
++                else fallback_misses += wrong;
++            }
++        }
++        predictor->update(result, t->taken, t->target);
++    }
++    end_trace();
++    // The supplied CBP2 traces each represent 100 million instructions.
++    const double mpki = 1000.0 * static_cast<double>(misses) / 100000000.0;
++    const double accuracy = conditional
++        ? 100.0 * (1.0 - static_cast<double>(misses) / conditional) : 0.0;
++    if (detailed) {
++        std::printf("{\"predictor\":\"%s\",\"branches\":%llu,"
++                    "\"conditional\":%llu,\"misses\":%llu,"
++                    "\"accuracy_pct\":%.9f,\"mpki\":%.9f,"
++                    "\"global_hits\":%llu,\"global_misses\":%llu,"
++                    "\"hit_mispredictions\":%llu,\"fallback_mispredictions\":%llu}\n",
++                    mode, branches, conditional, misses, accuracy, mpki,
++                    hits, is_pm ? conditional - hits : 0,
++                    hit_misses, fallback_misses);
++    }
++    std::printf("%.3f MPKI\n", mpki);
++    return 0;
+ }
+--- original/src/Makefile
++++ Ahmed_Ahmed/src/Makefile
+@@ -1,14 +1,25 @@
+-CXX		=	g++
+-CXXFLAGS	=	-g -O3 -Wall
+-
+-all:		predict predict_extra_credit
+-
+-predict:	predict.cc trace.cc predictor.h branch.h trace.h my_predictor.h
+-		$(CXX) $(CXXFLAGS) -o predict predict.cc trace.cc
+-
+-predict_extra_credit:        predict_extra_credit.cc trace.cc predictor.h branch.h trace.h my_predictor.h
+-		$(CXX) $(CXXFLAGS) -o predict_extra_credit predict_extra_credit.cc trace.cc
+-
+-
++# Assignment implementation author: Ahmed Ahmed
++CXX ?= g++
++CXXFLAGS ?= -std=c++17 -O3 -g -Wall -Wextra -Wpedantic
++HEADERS = predictor.h branch.h trace.h my_predictor.h
++.PHONY: all test sanitize extra-credit clean
++all: predict
++predict: predict.cc trace.cc $(HEADERS)
++	$(CXX) $(CXXFLAGS) -o $@ predict.cc trace.cc
++unit_tests: ../tests/test_predictor.cc $(HEADERS)
++	$(CXX) $(CXXFLAGS) -I. -o $@ ../tests/test_predictor.cc
++stream_test: ../tests/stream_test.cc $(HEADERS)
++	$(CXX) $(CXXFLAGS) -I. -o $@ ../tests/stream_test.cc
++test: predict unit_tests stream_test
++	./unit_tests
++	python3 ../tests/test_reference.py ./stream_test
++	python3 ../tests/test_cli.py ./predict
++sanitize: ../tests/test_predictor.cc $(HEADERS)
++	$(CXX) -std=c++17 -O1 -g -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -I. -o unit_tests_san ../tests/test_predictor.cc
++	ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./unit_tests_san
++# The original cpm_predictor remains an unimplemented, optional extra-credit stub.
++extra-credit: predict_extra_credit
++predict_extra_credit: predict_extra_credit.cc trace.cc $(HEADERS)
++	$(CXX) $(CXXFLAGS) -o $@ predict_extra_credit.cc trace.cc
+ clean:
+-		rm -f predict predict_extra_credit
++	rm -f predict predict_extra_credit unit_tests stream_test unit_tests_san
+--- original/src/trace.cc
++++ Ahmed_Ahmed/src/trace.cc
+@@ -1,3 +1,4 @@
++// Trace I/O fixes by Ahmed Ahmed; original CBP2 decoding preserved.
+ // trace.cc
+ // This file contains code for reading traces.  There's nothing in this
+ // file you need to understand to participate in the branch prediction 
+@@ -9,6 +10,7 @@
+ #include <stdlib.h>
+ #include <string.h>
+ #include <assert.h>
++#include <string>
+ 
+ #include "branch.h"
+ #include "trace.h"
+@@ -419,32 +421,40 @@
+ #define BZIP2_MAGIC	"BZ"
+ 
+ void init_trace (char *fname) {
+-	char *dc;
++	const char *dc;
+ 	char s[2] = { 0, 0 };
+-	char cmd[1000];
+ 
+ 	// figure out the compression method from the magic number
+ 
+-	FILE *f = fopen (fname, "r");
++	FILE *f = fopen (fname, "rb");
+ 	if (!f) {
+ 		perror (fname);
+-	}
+-	fread (s, 1, 2, f);
++		exit (1);
++	}
++	const size_t magic_size = fread (s, 1, 2, f);
++	if (ferror (f)) { perror (fname); fclose (f); exit (1); }
+ 	fclose (f);
+-	if (strncmp (s, GZIP_MAGIC, 2) == 0) 
++	if (magic_size == 2 && strncmp (s, GZIP_MAGIC, 2) == 0) 
+ 		dc = ZCAT;
+-	else if (strncmp (s, BZIP2_MAGIC, 2) == 0)
++	else if (magic_size == 2 && strncmp (s, BZIP2_MAGIC, 2) == 0)
+ 		dc = BZCAT;
+ 	else
+ 		dc = CAT;
+ 
+ 	// make a command that will decompress the file to stdout
+ 
+-	sprintf (cmd, "%s %s", dc, fname);
++	// Quote a filename as one shell argument (including embedded apostrophes).
++	std::string quoted = "'";
++	for (const char *p = fname; *p; ++p) {
++		if (*p == '\'') quoted += "'\\''";
++		else quoted += *p;
++	}
++	quoted += "'";
++	const std::string cmd = std::string(dc) + " " + quoted;
+ 
+ 	// pipe that stdout to tracefp
+ 
+-	tracefp = popen (cmd, "r");
++	tracefp = popen (cmd.c_str(), "r");
+ 	if (!tracefp) {
+ 		perror (fname);
+ 		exit (1);
+@@ -457,5 +467,8 @@
+ // close the trace file
+ 
+ void end_trace (void) {
+-	fclose (tracefp);
+-}
++	if (pclose (tracefp) != 0) {
++		fprintf (stderr, "trace decompressor failed\n");
++		exit (1);
++	}
++}
+--- original/run
++++ Ahmed_Ahmed/run
+@@ -1,25 +1,20 @@
+-#!/bin/csh
+-if ( $1 == "" ) then
+-	printf "Usage: $0 <trace-file-directory>\n"
+-	exit 1
+-endif
+-if ( ! { cd src; make -q } ) then
+-	printf "predict program is not up to date.\n"
+-endif
+-if ( ! -e src/predict ) then
+-	printf "predict program is not built.\n"
+-	exit 1
+-endif
+-set trace_list = `find $1 -name '*.trace.*' | sort`
+-set sum = 0
+-set n = 0
+-foreach i ( $trace_list )
+-	printf "%-40s\t" $i 
+-	set mpki = `./src/predict $i | tail -1 | sed -e '/MPKI/s///'`
+-	printf "%0.3f\n" $mpki
+-	set sum = `printf "$sum\n$mpki\n+\np\n" | dc`
+-	@ n = $n + 1
+-end
+-printf "average MPKI: "
+-printf "3\nk\n$sum\n$n\n/p\n" | dc
+-exit 0
++#!/usr/bin/env python3
++"""Author: Ahmed Ahmed. Portable replacement for the supplied csh/dc runner."""
++import pathlib
++import subprocess
++import sys
++if len(sys.argv) not in (2,3):
++    sys.exit('Usage: ./run TRACE_DIRECTORY [pm|bimodal|gshare|always_taken]')
++root=pathlib.Path(__file__).resolve().parent
++traces=sorted(pathlib.Path(sys.argv[1]).rglob('*.trace.*'))
++if not traces: sys.exit('No trace files found')
++mode=sys.argv[2] if len(sys.argv)==3 else 'pm'
++values=[]
++for trace in traces:
++    result=subprocess.run([str(root/'src/predict'),str(trace),mode,'--stats'],
++                          check=True,capture_output=True,text=True)
++    import json
++    value=json.loads(result.stdout.splitlines()[0])['mpki']
++    values.append(value)
++    print(f'{str(trace):55s} {value:.3f}',flush=True)
++print(f'average MPKI: {sum(values)/len(values):.3f}')

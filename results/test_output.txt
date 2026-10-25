@@ -1,0 +1,54 @@
+make: Entering directory '/workspace/scratch/6cd179e1a60a/work/Ahmed_Ahmed_Branch_Prediction/src'
+g++ -std=c++17 -O3 -g -Wall -Wextra -Wpedantic -o predict predict.cc trace.cc
+g++ -std=c++17 -O3 -g -Wall -Wextra -Wpedantic -I. -o unit_tests ../tests/test_predictor.cc
+g++ -std=c++17 -O3 -g -Wall -Wextra -Wpedantic -I. -o stream_test ../tests/stream_test.cc
+./unit_tests
+PASS initial_state
+PASS all_counter_transitions
+PASS hash_and_bit_fields
+PASS invalid_tag_is_not_a_hit
+PASS tag_mismatch_is_a_miss
+PASS hit_overrides_bimodal_both_directions
+PASS both_components_train_on_hit
+PASS invalid_first_and_fresh_allocation
+PASS lru_hit_refresh_and_replacement
+PASS actual_history_and_wraparound
+PASS unconditional_isolation
+PASS saved_prediction_indices
+PASS same_hash_aliases
+PASS appendix_hash_sequence
+PASS alternating_pattern_is_learned
+PASS bad_configuration_is_rejected
+PASS 16 directed predictor tests
+python3 ../tests/test_reference.py ./stream_test
+PASS independent reference: (12, 9, 6, 0), 10000 events
+PASS independent reference: (4, 2, 2, 2), 10000 events
+PASS independent reference: (2, 1, 1, 0), 10000 events
+PASS independent reference: (8, 4, 3, 1), 10000 events
+PASS 40000 differential events in 4 configurations (seed 20261025)
+python3 ../tests/test_cli.py ./predict
+PASS compressed trace with spaces/apostrophe and exact conditional metrics
+PASS original one-trace command and MPKI output format
+PASS argument and missing-file errors
+PASS decompression failure is not reported as a zero-miss result
+PASS 4 CLI integration groups
+g++ -std=c++17 -O1 -g -Wall -Wextra -fsanitize=address,undefined -fno-omit-frame-pointer -I. -o unit_tests_san ../tests/test_predictor.cc
+ASAN_OPTIONS=detect_leaks=0 UBSAN_OPTIONS=halt_on_error=1 ./unit_tests_san
+PASS initial_state
+PASS all_counter_transitions
+PASS hash_and_bit_fields
+PASS invalid_tag_is_not_a_hit
+PASS tag_mismatch_is_a_miss
+PASS hit_overrides_bimodal_both_directions
+PASS both_components_train_on_hit
+PASS invalid_first_and_fresh_allocation
+PASS lru_hit_refresh_and_replacement
+PASS actual_history_and_wraparound
+PASS unconditional_isolation
+PASS saved_prediction_indices
+PASS same_hash_aliases
+PASS appendix_hash_sequence
+PASS alternating_pattern_is_learned
+PASS bad_configuration_is_rejected
+PASS 16 directed predictor tests
+make: Leaving directory '/workspace/scratch/6cd179e1a60a/work/Ahmed_Ahmed_Branch_Prediction/src'

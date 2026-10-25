@@ -1,0 +1,113 @@
+make: Entering directory '/workspace/scratch/6cd179e1a60a/work/Ahmed_Ahmed_Branch_Prediction/src'
+make: Nothing to be done for 'all'.
+make: Leaving directory '/workspace/scratch/6cd179e1a60a/work/Ahmed_Ahmed_Branch_Prediction/src'
+164.gzip       always_taken 70.02453 MPKI
+164.gzip       bimodal      15.02982 MPKI
+164.gzip       gshare       12.47260 MPKI
+164.gzip       pm           12.61706 MPKI
+175.vpr        always_taken 85.31151 MPKI
+175.vpr        bimodal      14.67104 MPKI
+175.vpr        gshare       13.41493 MPKI
+175.vpr        pm           14.33739 MPKI
+176.gcc        always_taken 86.07123 MPKI
+176.gcc        bimodal      19.34749 MPKI
+176.gcc        gshare       11.25353 MPKI
+176.gcc        pm           15.29825 MPKI
+181.mcf        always_taken 102.49684 MPKI
+181.mcf        bimodal      33.24542 MPKI
+181.mcf        gshare       15.83697 MPKI
+181.mcf        pm           17.67979 MPKI
+186.crafty     always_taken 48.65113 MPKI
+186.crafty     bimodal      13.07522 MPKI
+186.crafty     gshare       5.83690 MPKI
+186.crafty     pm           8.46360 MPKI
+197.parser     always_taken 78.42064 MPKI
+197.parser     bimodal      15.41674 MPKI
+197.parser     gshare       10.00764 MPKI
+197.parser     pm           10.35735 MPKI
+201.compress   always_taken 76.98331 MPKI
+201.compress   bimodal      9.35624 MPKI
+201.compress   gshare       7.83112 MPKI
+201.compress   pm           8.19948 MPKI
+202.jess       always_taken 92.34324 MPKI
+202.jess       bimodal      8.80918 MPKI
+202.jess       gshare       1.56166 MPKI
+202.jess       pm           1.75020 MPKI
+205.raytrace   always_taken 109.50556 MPKI
+205.raytrace   bimodal      3.80626 MPKI
+205.raytrace   gshare       2.75556 MPKI
+205.raytrace   pm           3.42149 MPKI
+209.db         always_taken 91.45106 MPKI
+209.db         bimodal      6.47959 MPKI
+209.db         gshare       3.90945 MPKI
+209.db         pm           4.61313 MPKI
+213.javac      always_taken 109.64365 MPKI
+213.javac      bimodal      3.18078 MPKI
+213.javac      gshare       2.26655 MPKI
+213.javac      pm           2.63842 MPKI
+222.mpegaudio  always_taken 110.33860 MPKI
+222.mpegaudio  bimodal      3.15384 MPKI
+222.mpegaudio  gshare       2.18774 MPKI
+222.mpegaudio  pm           2.60376 MPKI
+227.mtrt       always_taken 112.02184 MPKI
+227.mtrt       bimodal      3.70627 MPKI
+227.mtrt       gshare       2.65749 MPKI
+227.mtrt       pm           3.26838 MPKI
+228.jack       always_taken 77.95837 MPKI
+228.jack       bimodal      7.69065 MPKI
+228.jack       gshare       3.03287 MPKI
+228.jack       pm           3.94642 MPKI
+252.eon        always_taken 24.22638 MPKI
+252.eon        bimodal      9.40466 MPKI
+252.eon        gshare       1.80662 MPKI
+252.eon        pm           3.13939 MPKI
+253.perlbmk    always_taken 66.83253 MPKI
+253.perlbmk    bimodal      5.95501 MPKI
+253.perlbmk    gshare       2.55424 MPKI
+253.perlbmk    pm           4.69974 MPKI
+254.gap        always_taken 75.95044 MPKI
+254.gap        bimodal      9.67450 MPKI
+254.gap        gshare       3.92556 MPKI
+254.gap        pm           4.79727 MPKI
+255.vortex     always_taken 70.52414 MPKI
+255.vortex     bimodal      1.91601 MPKI
+255.vortex     gshare       1.22218 MPKI
+255.vortex     pm           1.23933 MPKI
+256.bzip2      always_taken 178.25729 MPKI
+256.bzip2      bimodal      0.11193 MPKI
+256.bzip2      gshare       0.09412 MPKI
+256.bzip2      pm           0.07602 MPKI
+300.twolf      always_taken 59.22146 MPKI
+300.twolf      bimodal      21.94152 MPKI
+300.twolf      gshare       21.48945 MPKI
+300.twolf      pm           22.04560 MPKI
+{
+  "always_taken": {
+    "traces": 20,
+    "misses": 172623375,
+    "conditional": 275461634,
+    "mean_mpki": 86.3116875,
+    "pooled_accuracy_pct": 37.33306069040453
+  },
+  "bimodal": {
+    "traces": 20,
+    "misses": 20597217,
+    "conditional": 275461634,
+    "mean_mpki": 10.2986085,
+    "pooled_accuracy_pct": 92.52265489719704
+  },
+  "gshare": {
+    "traces": 20,
+    "misses": 12611718,
+    "conditional": 275461634,
+    "mean_mpki": 6.305859,
+    "pooled_accuracy_pct": 95.42160633520383
+  },
+  "pm": {
+    "traces": 20,
+    "misses": 14519207,
+    "conditional": 275461634,
+    "mean_mpki": 7.2596035,
+    "pooled_accuracy_pct": 94.72913639944501
+  }
+}

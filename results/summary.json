@@ -1,92 +1,30 @@
-[
-  {
-    "accuracy_pct": 94.72913639944501,
-    "aggregate_mpki": 7.2596035,
-    "allocations": 71561027,
-    "branch_count": 372250241,
-    "conditional_count": 275461634,
-    "direction_misses": 14519207,
-    "global_hits": 203900607,
-    "global_misses": 71561027,
-    "logical_storage_bits": 17935,
-    "mean_trace_accuracy_pct": 94.65756044851697,
-    "mean_trace_mpki": 7.2596035,
-    "misprediction_rate_pct": 5.2708636005549865,
-    "predictor": "pm2",
-    "replacements": 71540547,
-    "total_instructions": 2000000000,
-    "trace_count": 20
+{
+  "always_taken": {
+    "traces": 20,
+    "misses": 172623375,
+    "conditional": 275461634,
+    "mean_mpki": 86.3116875,
+    "pooled_accuracy_pct": 37.33306069040453
   },
-  {
-    "accuracy_pct": 95.20440004360098,
-    "aggregate_mpki": 6.605019,
-    "allocations": 34553939,
-    "branch_count": 372250241,
-    "conditional_count": 275461634,
-    "direction_misses": 13210038,
-    "global_hits": 240907695,
-    "global_misses": 34553939,
-    "logical_storage_bits": 30735,
-    "mean_trace_accuracy_pct": 95.18339373931526,
-    "mean_trace_mpki": 6.605019,
-    "misprediction_rate_pct": 4.79559995639901,
-    "predictor": "pm4",
-    "replacements": 34512981,
-    "total_instructions": 2000000000,
-    "trace_count": 20
+  "bimodal": {
+    "traces": 20,
+    "misses": 20597217,
+    "conditional": 275461634,
+    "mean_mpki": 10.2986085,
+    "pooled_accuracy_pct": 92.52265489719704
   },
-  {
-    "accuracy_pct": 92.52265489719704,
-    "aggregate_mpki": 10.2986085,
-    "allocations": 0,
-    "branch_count": 372250241,
-    "conditional_count": 275461634,
-    "direction_misses": 20597217,
-    "global_hits": 0,
-    "global_misses": 0,
-    "logical_storage_bits": 8192,
-    "mean_trace_accuracy_pct": 92.39408578211446,
-    "mean_trace_mpki": 10.2986085,
-    "misprediction_rate_pct": 7.477345102802955,
-    "predictor": "bimodal",
-    "replacements": 0,
-    "total_instructions": 2000000000,
-    "trace_count": 20
+  "gshare": {
+    "traces": 20,
+    "misses": 12611718,
+    "conditional": 275461634,
+    "mean_mpki": 6.305859,
+    "pooled_accuracy_pct": 95.42160633520383
   },
-  {
-    "accuracy_pct": 95.42160633520383,
-    "aggregate_mpki": 6.305859,
-    "allocations": 0,
-    "branch_count": 372250241,
-    "conditional_count": 275461634,
-    "direction_misses": 12611718,
-    "global_hits": 0,
-    "global_misses": 0,
-    "logical_storage_bits": 65551,
-    "mean_trace_accuracy_pct": 95.40650032187457,
-    "mean_trace_mpki": 6.305859,
-    "misprediction_rate_pct": 4.578393664796166,
-    "predictor": "gshare",
-    "replacements": 0,
-    "total_instructions": 2000000000,
-    "trace_count": 20
-  },
-  {
-    "accuracy_pct": 37.33306069040453,
-    "aggregate_mpki": 86.3116875,
-    "allocations": 0,
-    "branch_count": 372250241,
-    "conditional_count": 275461634,
-    "direction_misses": 172623375,
-    "global_hits": 0,
-    "global_misses": 0,
-    "logical_storage_bits": 0,
-    "mean_trace_accuracy_pct": 37.448258126833835,
-    "mean_trace_mpki": 86.3116875,
-    "misprediction_rate_pct": 62.66693930959547,
-    "predictor": "taken",
-    "replacements": 0,
-    "total_instructions": 2000000000,
-    "trace_count": 20
+  "pm": {
+    "traces": 20,
+    "misses": 14519207,
+    "conditional": 275461634,
+    "mean_mpki": 7.2596035,
+    "pooled_accuracy_pct": 94.72913639944501
   }
-]
+}

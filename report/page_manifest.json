@@ -1,0 +1,24 @@
+{
+  "pages": 19,
+  "titles": [
+    "1  Introduction",
+    "2  Predictor design and assumptions",
+    "3.1  Saved lookup fields and table state",
+    "3.2  Initialization and saturating counters",
+    "3.3  Global lookup and final prediction",
+    "3.4  Training, allocation, LRU, and history",
+    "3.5  Measurement and comparison controls",
+    "3.6  Portable run and reproducible build",
+    "3.7  Trace opening and error handling",
+    "3.8  Trace filenames with spaces or quotes",
+    "4.1  Directed tests and independent reference",
+    "4.2  Captured test output",
+    "4.3  Worked trace using the teaching configuration",
+    "5.1  Experimental method and metric definitions",
+    "5.2  Complete benchmark MPKI results",
+    "5.3  Exact hybrid counts and prediction-source use",
+    "5.4  Interpretation of the measured results",
+    "6  Reproduction and submission contents",
+    "7  Requirement review and conclusion"
+  ]
+}

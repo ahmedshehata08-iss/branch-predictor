@@ -71,8 +71,11 @@ The model is educational and is not claimed to reproduce every detail of a comme
 - `src/trace.cc`: inherited trace decoding with file-open, filename-quoting, and subprocess-completion fixes.
 - `src/Makefile`, `run`, `run_comparison.py`: build, tests, portable suite execution, and experiments.
 - `tests/`: directed, differential, and CLI tests plus the C++ test adapter.
-- `results/`: earlier recorded results; rerun `run_comparison.py` to regenerate outputs for the current implementation. Current measured tables are included in the PDF.
-- `report/Ahmed_Ahmed_Branch_Prediction_Report.pdf`: current report, including embedded source snapshots and measured results.
+- `baseline/`: original starter files used for the before snapshots.
+- `results/benchmark_results.csv`, `results/raw_runs.json`, `results/summary.json`: the current 80 benchmark runs, exact output, and aggregate metrics.
+- `results/test_output.txt`, `results/toy_trace.csv`, `results/code_changes.patch`: captured validation output, the 23-event worked example, and the complete starter-to-current source diff.
+- `results/source_hashes.sha256`, `results/environment.txt`, `results/benchmark_console.txt`: source integrity and recorded run context.
+- `report/`: current PDF, `build_report.py`, page manifest, and `assets/` containing source snapshots, comparison plot, and test-output image.
 - `traces/`: all 20 supplied compressed traces, unchanged.
 - `doc/index.html` and `doc/README.original`: supplied CBP2 documentation; original attribution retained.
 
@@ -80,10 +83,18 @@ The new assignment implementation and report are attributed to Ahmed Ahmed. The 
 
 ## Report
 
-The linked PDF contains eight before-and-after snapshot pairs, the worked branch sequence, validation evidence, and results for all 20 traces. The source snapshots were generated from actual source excerpts with their line numbers.
+The linked PDF contains eight before-and-after snapshot pairs, the worked branch sequence, validation evidence, and results for all 20 traces. The source snapshots were generated from the committed `baseline/` and `src/` files with their line numbers.
+
+To rebuild the report, install `reportlab`, `Pillow`, `matplotlib`, and the DejaVu/Liberation fonts (for example, Linux packages `fonts-dejavu-core` and `fonts-liberation2`), then run:
+
+```sh
+python3 report/build_report.py
+```
+
+The builder reads the committed result files and regenerates the PDF and its images. To check the recorded source hashes, run `sha256sum -c results/source_hashes.sha256` from the repository root.
 
 ## GitHub submission
 
-The code, README, PDF report, existing traces, and required test sources are maintained together at https://github.com/ahmedshehata08-iss/branch-predictor. Build products are excluded by `.gitignore`.
+The code, README, report, supporting files, existing traces, and required test sources are maintained together at https://github.com/ahmedshehata08-iss/branch-predictor. Build products are excluded by `.gitignore`.
 
-The current report is [Ahmed_Ahmed_Branch_Prediction_Report.pdf](report/Ahmed_Ahmed_Branch_Prediction_Report.pdf), and its tables contain the current measured benchmark evidence. Earlier repository reports, scripts, test files, and logs are retained as historical material; use the commands above to test and reproduce this version. Running `run_comparison.py` creates `results/benchmark_results.csv`, `results/raw_runs.json`, and an updated `results/summary.json`.
+The current report is [Ahmed_Ahmed_Branch_Prediction_Report.pdf](report/Ahmed_Ahmed_Branch_Prediction_Report.pdf), and all supporting paths listed on pages 10, 12, and 18 are committed. Current benchmark evidence is available in [benchmark_results.csv](results/benchmark_results.csv), [raw_runs.json](results/raw_runs.json), and [summary.json](results/summary.json). Earlier reports, scripts, test files, and differently named logs remain as historical material; use the commands above to test and reproduce this version. Running `run_comparison.py` regenerates the current benchmark outputs.
