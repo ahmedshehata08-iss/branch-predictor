@@ -1,70 +1,89 @@
-# Pentium M Style Branch Direction Predictor
+# Branch Predictor Implementation
 
-**Author: Ahmed Ahmed**
+**Author: Ahmed Ahmed**  
+Computer Architecture - Assignment 1  
+Date: October 25, 2026
 
-This project completes `pm_predictor` in the supplied CBP2 infrastructure. It combines a 4,096-entry bimodal table with a 512-set tagged global predictor. The default has two ways; a four-way configuration is included for comparison. The package contains source, the 20 supplied traces, correctness checks, recorded experiment results, and a one-page report.
+**Repository:** https://github.com/ahmedshehata08-iss/branch-predictor
+
+This submission implements the required Pentium M-style hybrid **direction** predictor in `src/my_predictor.h`, using the supplied CBP2 infrastructure. Read the [19-page report](report/Ahmed_Ahmed_Branch_Prediction_Report.pdf) for eight before-and-after code snapshot pairs, tests, and measured results.
 
 ## Build and run
 
-Requirements: Linux or another POSIX environment, a C++17 compiler (`g++`), `make`, Python 3, `bzip2`, and `gzip`. On Windows use WSL. The code has no third-party C++ dependencies. Python scripts use the standard library.
+Requirements: Linux/WSL or a Unix-like environment, GNU Make, a C++17 compiler, Python 3, gzip, and bzip2. The supplied decoder uses `/bin/gzip`, `/usr/bin/bzip2`, and `/bin/cat`; change `src/trace.h` if these programs are elsewhere.
 
-From this directory:
-
-```bash
+```sh
 make -C src
 ./src/predict traces/164.gzip/gzip.trace.bz2
-./src/predict traces/164.gzip/gzip.trace.bz2 --predictor pm4 --json
-make -C src test
-python3 scripts/replay_handout.py --output results/handout_replay.csv
-python3 scripts/run_experiments.py --jobs 2 --output results
+./src/predict traces/164.gzip/gzip.trace.bz2 pm --stats
+./run traces
 ```
 
-The last command runs all five predictors on all 20 traces. Each run starts a fresh process and fresh predictor state. The portable `./run traces` wrapper supports the original assignment workflow without `csh` or `dc`. See `python3 scripts/run_experiments.py --help` for options. To preserve the included results, choose a different output directory when rerunning.
+`predict TRACE` defaults to the completed hybrid predictor and prints `N.NNN MPKI`. `--stats` adds a JSON line with exact branch/miss counts, conditional accuracy, and global-hit/fallback accounting. Predictor choices: `pm`, `bimodal`, `gshare`, `always_taken`.
 
-Predictor names:
+## Reproduce validation and benchmark results
 
-| Name | Design |
-|---|---|
-| `pm2` | Default hybrid, 512 sets and 2 ways |
-| `pm4` | Same hybrid with 4 ways |
-| `bimodal` | Same 4,096-counter fallback used by the hybrid |
-| `gshare` | Supplied 32,768-counter, 15-bit gshare algorithm |
-| `taken` | Always predict taken |
+```sh
+make -C src test
+make -C src sanitize
+python3 run_comparison.py
+```
 
-## Implementation
+The tests include 16 directed cases, 40,000 comparisons against an independent Python dictionary/LRU model in four configurations, and four CLI integration groups. AddressSanitizer and UndefinedBehaviorSanitizer check the directed tests. Leak detection is disabled in the sanitizer target because the execution container blocks the required process inspection; leak checking is not claimed.
 
-The assignment-facing class is `pm_predictor` in `src/my_predictor.h`, derived from `branch_predictor`. The implementation uses:
+The benchmark script runs all 20 supplied traces with each of the four predictors (80 runs) and recreates `results/benchmark_results.csv`, `results/raw_runs.json`, and `results/summary.json`. Each supplied trace represents 100 million instructions; the 20-trace suite therefore represents 2 billion instructions **per predictor**. This instruction denominator must be changed if different traces are used. Synthetic unit tests use miss counts/accuracy, not benchmark MPKI.
 
-- Bimodal index: `PC & 0xFFF`; 2-bit counters start at 1 (weakly not taken).
-- Global key: `(PC ^ GHR) & 0x7FFF`; set is `key >> 6`, tag is `key & 63`.
-- 15-bit GHR of resolved conditional outcomes, initially zero.
-- Global entries with valid bit, 6-bit tag, 2-bit saturating counter, and LRU state.
-- A matching global entry overrides the bimodal prediction. A miss uses the bimodal prediction.
-- Every conditional branch trains the bimodal counter and the matching global counter, or allocates a global entry on a miss. Allocation uses an invalid way first, then the least recently used way. A new counter is 2 if taken and 1 if not taken.
-- Prediction-time index/tag/way are saved in `pm_update`; history changes only after training.
-- Unconditional branches predict taken and do not train direction tables or GHR. Target prediction returns zero and is not evaluated.
+| Predictor | Mean MPKI | Pooled conditional accuracy |
+|---|---:|---:|
+| always_taken | 86.311688 | 37.3331% |
+| bimodal | 10.298609 | 92.5227% |
+| gshare | 6.305859 | 95.4216% |
+| pm | 7.259603 | 94.7291% |
 
-This is the simplified predictor requested by the assignment, not an exact Pentium M hardware reconstruction. PIR, the undocumented hardware hash, loop prediction, target prediction, speculative state, and pipeline timing are outside scope. The main diagram implies a 15-bit key, while Appendix B's large drawing labels a 14-bit BHR; this implementation explicitly uses 15 bits. Raw PC bits follow the main diagram; the separate toy replay uses `PC >> 2` as in the toy diagram.
+The hybrid reduces mean MPKI by 91.59% relative to the starter always-taken behavior and by 29.51% relative to bimodal. It improves on bimodal in 19 of 20 traces, but its mean MPKI is 15.12% higher than the supplied gshare. This is not an equal-storage comparison: gshare has 32,768 two-bit counters, whereas the hybrid uses a 4,096-counter bimodal table and 1,024 tagged global counters.
 
-`gshare` preserves the starter algorithm's strong-not-taken initialization (counter 0). It has more logical storage than either hybrid and is a reference, not an equal-budget comparison. The hybrid's C++ array reserves up to four ways even in two-way mode; reported storage is ideal packed hardware state, not process memory.
+## Implementation choices
 
-## Results and reproducibility
+- Bimodal: 4,096 two-bit counters, index `PC & 0xfff`.
+- Global: 512 sets, two ways per set, six-bit tags, one valid bit per way, two-bit counter per way, one LRU victim bit per set.
+- History: 15 actual conditional outcomes, initially zero. `hash = (PC ^ history) & 0x7fff`, `row = hash >> 6`, `tag = hash & 0x3f`.
+- The default uses raw PC bits as in the main assignment diagram. The small Appendix B address example uses a two-bit PC shift; `pm_predictor(4, 2, 2, 2)` supports that separate teaching configuration.
+- Bimodal counters start at 1 (weakly not taken); global entries start invalid. A counter of 2 or 3 predicts taken.
+- A valid matching global tag overrides bimodal. A global miss falls back to bimodal.
+- Every conditional branch trains bimodal. Global hits train their matched counter; global misses allocate an invalid way first, otherwise the LRU way. New/replaced entries start at 2 for a taken result or 1 for a not-taken result, rather than inheriting the old entry's counter.
+- Resolved global accesses refresh LRU. History shifts once, after training, using the actual outcome. Unconditional branches predict taken and do not train these direction tables or history.
+- One prediction may be outstanding, matching the supplied serial `predict`/`update` driver. The model does not simulate speculative rollback.
 
-`REPORT.md` and the one-page `report/Branch_Predictor_Report.docx` summarize what I implemented, the testing, and the results. `results/` contains detailed CSV/JSON outputs, summary metrics, exact commands, source/trace hashes, and environment information. Mispredictions are counted before updating the predictor.
+The assignment does not prescribe every reset/allocation policy. These choices are documented and tested. They differ from the mixed initial counters and reused replacement counters in Appendix B, so that example is used to check address/hash arithmetic, not to claim identical predictions under different initial state.
 
-Each provided trace represents 100 million instructions according to `doc/index.html`. MPKI is conditional direction misses divided by 100,000. Accuracy uses the number of conditional branches as its denominator. For another trace with a known instruction count, pass `--instructions N`; do not reuse the 100-million default without verifying that trace's provenance.
+## Required scope and limits
 
-`tests/test_predictor.cc` checks the algorithm against an independent reference with timestamp-based LRU, as well as directed edge cases. `tests/test_driver.py` checks real trace decoding and metric/error handling. `scripts/replay_handout.py` reproduces the handout's 22 published final predictions and the omitted 23rd event using the handout's toy-specific rules. Those toy rules deliberately retain a victim counter on replacement; the production hybrid initializes new contexts from their observed outcome instead.
+Implemented: `pm_predictor` constructor, prediction, update, bimodal, tagged two-way global predictor, hit priority, counters, replacement, history, tests, results, and report.
 
-## Files and attribution
+PIR/path hashing, loop prediction, target prediction, BTB, indirect target cache, and the complete `cpm_predictor` extra-credit design are excluded as allowed by the assignment. The original extra-credit stub is retained for provenance and is built only with `make -C src extra-credit`; it is not a completed predictor and is not used in results. Target prediction remains zero and target accuracy is not reported.
 
-- `src/my_predictor.h`: implemented hybrid, bimodal and static baselines, modernized supplied gshare.
-- `src/predict.cc`: command-line driver and exact metrics.
-- `src/trace.cc`: original custom CBP2 decoder; file opening, shell quoting, decompressor status, and truncated-record checks hardened.
-- `src/predictor.h`: supplied interface, with target getter return type corrected from `bool` to `unsigned int`.
-- `doc/index.html`, `doc/README.original`, `src/compress/`, and `traces/`: supplied infrastructure and documentation, attributed to Daniel A. Jimenez. Their original notices are retained. Optional unimplemented extra-credit driver was excluded.
-- No external cache implementation was used. Global cache and replacement code were written directly for this assignment.
+The model is educational and is not claimed to reproduce every detail of a commercial Pentium M. Six-bit tags permit intentional aliasing of different PC/history combinations. No speedup, power saving, or cycle timing is inferred from MPKI alone. The inherited decoder remains intended for the supplied valid CBP2 trace format; it is not a general corrupted-input validator.
 
-Sources: the supplied *Assignment 1: Branch Predictor Implementation*, especially pages 2 and 5-11; supplied CBP2 documentation; and Milena Milenkovic, Aleksandar Milenkovic, and Jeffrey Kulick, *Demystifying Intel Branch Predictors* (the attached `milenkovic_WDDD02.pdf`). That attached paper studies Pentium III/Pentium 4 and is not the 2009 Pentium M paper cited by the assignment. The report does not attribute Pentium M dimensions to it.
+## Files and provenance
 
-This repository contains the assignment implementation, reproducible experiments, and a concise report.
+- `src/my_predictor.h`: hybrid implementation, supplied gshare control, new bimodal/always-taken controls.
+- `src/predict.cc`: selectable predictors and exact statistics.
+- `src/trace.cc`: inherited trace decoding with file-open, filename-quoting, and subprocess-completion fixes.
+- `src/Makefile`, `run`, `run_comparison.py`: build, tests, portable suite execution, and experiments.
+- `tests/`: directed, differential, and CLI tests plus the C++ test adapter.
+- `results/`: earlier recorded results; rerun `run_comparison.py` to regenerate outputs for the current implementation. Current measured tables are included in the PDF.
+- `report/Ahmed_Ahmed_Branch_Prediction_Report.pdf`: current report, including embedded source snapshots and measured results.
+- `traces/`: all 20 supplied compressed traces, unchanged.
+- `doc/index.html` and `doc/README.original`: supplied CBP2 documentation; original attribution retained.
+
+The new assignment implementation and report are attributed to Ahmed Ahmed. The underlying CBP2 infrastructure and gshare example are supplied course material; the CBP2 documentation credits Daniel A. Jimenez. No third-party cache implementation was copied.
+
+## Report
+
+The linked PDF contains eight before-and-after snapshot pairs, the worked branch sequence, validation evidence, and results for all 20 traces. The source snapshots were generated from actual source excerpts with their line numbers.
+
+## GitHub submission
+
+The code, README, PDF report, existing traces, and required test sources are maintained together at https://github.com/ahmedshehata08-iss/branch-predictor. Build products are excluded by `.gitignore`.
+
+The current report is [Ahmed_Ahmed_Branch_Prediction_Report.pdf](report/Ahmed_Ahmed_Branch_Prediction_Report.pdf), and its tables contain the current measured benchmark evidence. Earlier repository reports, scripts, test files, and logs are retained as historical material; use the commands above to test and reproduce this version. Running `run_comparison.py` creates `results/benchmark_results.csv`, `results/raw_runs.json`, and an updated `results/summary.json`.

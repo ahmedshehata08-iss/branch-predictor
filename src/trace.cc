@@ -1,3 +1,4 @@
+// Trace I/O fixes by Ahmed Ahmed; original CBP2 decoding preserved.
 // trace.cc
 // This file contains code for reading traces.  There's nothing in this
 // file you need to understand to participate in the branch prediction 
@@ -411,10 +412,6 @@ trace *read_trace (void) {
 	// this should "never" happen
 	default: fprintf (stderr, "%d\n", c); fflush (stderr); assert (0);
 	}
-	if (end_of_file) {
-		fprintf(stderr, "Truncated branch trace record\n");
-		exit(1);
-	}
 	return & t;
 }
 
@@ -423,41 +420,55 @@ trace *read_trace (void) {
 #define GZIP_MAGIC     "\037\213"
 #define BZIP2_MAGIC	"BZ"
 
-// Preserve the original custom trace decoding above; harden only file I/O.
-static std::string shell_quote(const char *text) {
-    std::string result = "'";
-    for (; *text; ++text) {
-        if (*text == '\'') result += "'\\''";
-        else result += *text;
-    }
-    return result + "'";
+void init_trace (char *fname) {
+	const char *dc;
+	char s[2] = { 0, 0 };
+
+	// figure out the compression method from the magic number
+
+	FILE *f = fopen (fname, "rb");
+	if (!f) {
+		perror (fname);
+		exit (1);
+	}
+	const size_t magic_size = fread (s, 1, 2, f);
+	if (ferror (f)) { perror (fname); fclose (f); exit (1); }
+	fclose (f);
+	if (magic_size == 2 && strncmp (s, GZIP_MAGIC, 2) == 0) 
+		dc = ZCAT;
+	else if (magic_size == 2 && strncmp (s, BZIP2_MAGIC, 2) == 0)
+		dc = BZCAT;
+	else
+		dc = CAT;
+
+	// make a command that will decompress the file to stdout
+
+	// Quote a filename as one shell argument (including embedded apostrophes).
+	std::string quoted = "'";
+	for (const char *p = fname; *p; ++p) {
+		if (*p == '\'') quoted += "'\\''";
+		else quoted += *p;
+	}
+	quoted += "'";
+	const std::string cmd = std::string(dc) + " " + quoted;
+
+	// pipe that stdout to tracefp
+
+	tracefp = popen (cmd.c_str(), "r");
+	if (!tracefp) {
+		perror (fname);
+		exit (1);
+	}
+	bufpos = 0;
+	bufsize = 0;
+	end_of_file = false;
 }
 
-void init_trace (char *fname) {
-    const char *dc;
-    char s[2] = {0, 0};
-    FILE *f = fopen(fname, "rb");
-    if (!f) { perror(fname); exit(1); }
-    const size_t n = fread(s, 1, 2, f);
-    if (ferror(f)) { perror(fname); fclose(f); exit(1); }
-    fclose(f);
-    if (n == 0) { fprintf(stderr, "Empty trace: %s\n", fname); exit(1); }
-    if (n == 2 && strncmp(s, GZIP_MAGIC, 2) == 0) dc = ZCAT;
-    else if (n == 2 && strncmp(s, BZIP2_MAGIC, 2) == 0) dc = BZCAT;
-    else dc = CAT;
-    const std::string command = std::string(dc) + " -- " + shell_quote(fname);
-    tracefp = popen(command.c_str(), "r");
-    if (!tracefp) { perror(fname); exit(1); }
-    bufpos = 0;
-    bufsize = 0;
-    end_of_file = false;
-}
+// close the trace file
 
 void end_trace (void) {
-    const bool read_error = ferror(tracefp) != 0;
-    const int status = pclose(tracefp);
-    if (read_error || status != 0) {
-        fprintf(stderr, "Trace read or decompression failed (status %d)\n", status);
-        exit(1);
-    }
+	if (pclose (tracefp) != 0) {
+		fprintf (stderr, "trace decompressor failed\n");
+		exit (1);
+	}
 }

@@ -1,214 +1,223 @@
-#ifndef MY_PREDICTOR_H
-#define MY_PREDICTOR_H
-
-#include <algorithm>
-#include <array>
+// Assignment implementation author: Ahmed Ahmed
+// The supplied gshare example and optional extra-credit stub retain their origin.
+#ifndef AHMED_AHMED_MY_PREDICTOR_H
+#define AHMED_AHMED_MY_PREDICTOR_H
+#include <cstring>
 #include <cstdint>
 #include <stdexcept>
+#include <vector>
 
-// Included after branch.h and predictor.h, as in the supplied CBP2 driver.
-// The CBP2 interface is sequential: predict(b) is immediately followed by
-// update(u, actual, target). This simulator does not model speculative state.
-inline void train_counter(std::uint8_t &counter, bool taken) {
-    if (taken) { if (counter < 3) ++counter; }
-    else { if (counter > 0) --counter; }
-}
+// my_predictor.h
+// This file contains a sample gshare_predictor class.
+// It is a simple 32,768-entry gshare with a history length of 15.
 
-struct simple_update : public branch_update {
-    bool conditional = false;
-    unsigned index = 0;
-};
-
-class taken_predictor : public branch_predictor {
-    branch_update u_;
+class gshare_update : public branch_update {
 public:
-    std::uint64_t logical_storage_bits() const { return 0; }
-    branch_update *predict(branch_info &) override {
-        u_.direction_prediction(true);
-        u_.target_prediction(0);
-        return &u_;
-    }
+	unsigned int index;
 };
 
-// Bimodal baseline: exactly the same table/index/initialization as pm_predictor.
-class bimodal_predictor : public branch_predictor {
-    std::array<std::uint8_t, 4096> counters_{};
-    simple_update u_;
-public:
-    std::uint64_t logical_storage_bits() const { return 4096ull * 2; }
-    bimodal_predictor() { counters_.fill(1); }  // weakly not taken
-    branch_update *predict(branch_info &b) override {
-        u_.conditional = (b.br_flags & BR_CONDITIONAL) != 0;
-        u_.index = b.address & 4095u;
-        u_.direction_prediction(!u_.conditional || counters_[u_.index] >= 2);
-        u_.target_prediction(0);
-        return &u_;
-    }
-    void update(branch_update *u, bool taken, unsigned int) override {
-        auto &s = *static_cast<simple_update *>(u);
-        if (s.conditional) train_counter(counters_[s.index], taken);
-    }
-};
-
-// Supplied gshare algorithm retained: 15-bit history, 32768 counters, all 0.
-// Formatting and types are modernized; its prediction/training rules are unchanged.
 class gshare_predictor : public branch_predictor {
-    std::array<std::uint8_t, 32768> counters_{};
-    std::uint32_t history_ = 0;
-    simple_update u_;
 public:
-    std::uint64_t logical_storage_bits() const { return 32768ull * 2 + 15; }
-    branch_update *predict(branch_info &b) override {
-        u_.conditional = (b.br_flags & BR_CONDITIONAL) != 0;
-        u_.index = (b.address ^ history_) & 32767u;
-        u_.direction_prediction(!u_.conditional || counters_[u_.index] >= 2);
-        u_.target_prediction(0);
-        return &u_;
-    }
-    void update(branch_update *u, bool taken, unsigned int) override {
-        auto &s = *static_cast<simple_update *>(u);
-        if (!s.conditional) return;
-        train_counter(counters_[s.index], taken);
-        history_ = ((history_ << 1) | unsigned(taken)) & 32767u;
-    }
+#define HISTORY_LENGTH	15
+#define TABLE_BITS	15
+	gshare_update u;
+	branch_info bi;
+	unsigned int history;
+	unsigned char tab[1<<TABLE_BITS];
+
+	gshare_predictor (void) : history(0) { 
+		memset (tab, 0, sizeof (tab));
+	}
+
+	branch_update *predict (branch_info & b) {
+		bi = b;
+		if (b.br_flags & BR_CONDITIONAL) {
+			u.index = 
+				  (history << (TABLE_BITS - HISTORY_LENGTH)) 
+				^ (b.address & ((1<<TABLE_BITS)-1));
+			u.direction_prediction (tab[u.index] >> 1);
+		} else {
+			u.direction_prediction (true);
+		}
+		u.target_prediction (0);
+		return &u;
+	}
+
+	void update (branch_update *u, bool taken, unsigned int /*target*/) {
+		if (bi.br_flags & BR_CONDITIONAL) {
+			unsigned char *c = &tab[((gshare_update*)u)->index];
+			if (taken) {
+				if (*c < 3) (*c)++;
+			} else {
+				if (*c > 0) (*c)--;
+			}
+			history <<= 1;
+			history |= taken;
+			history &= (1<<HISTORY_LENGTH)-1;
+		}
+	}
 };
 
-struct pm_statistics {
-    std::uint64_t global_hits = 0;
-    std::uint64_t global_misses = 0;
-    std::uint64_t allocations = 0;
-    std::uint64_t replacements = 0;
-};
-
-struct pm_update : public branch_update {
+// Prediction-time lookup information; the driver resolves one branch at a time.
+class pm_update : public branch_update {
+public:
     bool conditional = false;
-    unsigned bimodal_index = 0;
-    unsigned global_set = 0;
-    unsigned tag = 0;
-    int hit_way = -1;
-    bool bimodal_prediction = false;
+    unsigned int index = 0;   // bimodal index
+    unsigned int row = 0;
+    unsigned int tag = 0;
+    int way = -1;             // -1 means the global lookup missed
 };
 
-// Assignment's Pentium M style hybrid, not an exact hardware reconstruction.
-// Diagram: bimodal IP[11:0]; global 512 sets, 6-bit tags, 2-bit counters.
-// Allowed simplification: GHR replaces PIR, no undocumented hash is emulated.
-// hash=(IP XOR GHR)[14:0]; set=hash[14:6]; tag=hash[5:0].
-// Global hit overrides bimodal unconditionally. No chooser or loop predictor.
+// A simplified Pentium M-style hybrid direction predictor.
+// Default mapping follows the assignment diagram: raw IP bits, not IP >> 2.
 class pm_predictor : public branch_predictor {
 public:
-    static constexpr unsigned BIMODAL_ENTRIES = 4096;
-    static constexpr unsigned GLOBAL_SETS = 512;
-    static constexpr unsigned HISTORY_BITS = 15;
-    static constexpr unsigned TAG_BITS = 6;
-    struct entry {
+    struct global_entry {
         bool valid = false;
-        std::uint8_t tag = 0;
-        std::uint8_t counter = 1;
-        std::uint8_t rank = 0;  // 0=MRU, larger=older, among valid ways
+        unsigned int tag = 0;
+        unsigned char counter = 1;
     };
-private:
-    unsigned ways_;
-    std::array<std::uint8_t, BIMODAL_ENTRIES> bimodal_{};
-    std::array<std::array<entry, 4>, GLOBAL_SETS> global_{};
-    std::uint32_t history_ = 0;
-    pm_update u_;
-    pm_statistics stats_;
+    struct global_set { global_entry ways[2]; };
 
-    void touch(unsigned set, unsigned way, bool newly_valid) {
-        auto &entries = global_[set];
-        const unsigned old_rank = entries[way].rank;
-        for (unsigned w = 0; w < ways_; ++w) {
-            if (w != way && entries[w].valid &&
-                (newly_valid || entries[w].rank < old_rank))
-                ++entries[w].rank;
-        }
-        entries[way].rank = 0;
+    pm_update u;
+    unsigned int history = 0;
+    unsigned int bimodal_mask, row_mask, tag_mask, history_mask;
+    unsigned int tag_bits, pc_shift;
+    std::vector<unsigned char> bimodal;
+    std::vector<global_set> global;
+    std::vector<unsigned char> lru; // next victim if both ways are valid
+
+    explicit pm_predictor(unsigned int bimodal_bits = 12,
+                          unsigned int set_bits = 9,
+                          unsigned int tag_bits_arg = 6,
+                          unsigned int pc_shift_arg = 0) {
+        if (bimodal_bits < 1 || bimodal_bits > 16 ||
+            set_bits < 1 || set_bits > 16 ||
+            tag_bits_arg < 1 || tag_bits_arg > 8 || pc_shift_arg > 31)
+            throw std::invalid_argument("invalid predictor configuration");
+        tag_bits = tag_bits_arg;
+        pc_shift = pc_shift_arg;
+        bimodal_mask = (1u << bimodal_bits) - 1;
+        row_mask = (1u << set_bits) - 1;
+        tag_mask = (1u << tag_bits) - 1;
+        history_mask = (1u << (set_bits + tag_bits)) - 1;
+        bimodal.assign(1u << bimodal_bits, 1); // weakly not taken
+        global.resize(1u << set_bits);       // all entries invalid
+        lru.assign(1u << set_bits, 0);
     }
-public:
-    explicit pm_predictor(unsigned ways = 2) : ways_(ways) {
-        if (ways != 2 && ways != 4)
-            throw std::invalid_argument("pm_predictor supports 2 or 4 ways");
-        bimodal_.fill(1);
+
+    static void train(unsigned char &counter, bool taken) {
+        if (taken && counter < 3) ++counter;
+        if (!taken && counter > 0) --counter;
     }
 
     branch_update *predict(branch_info &b) override {
-        u_.conditional = (b.br_flags & BR_CONDITIONAL) != 0;
-        u_.hit_way = -1;
-        u_.direction_prediction(true);
-        u_.target_prediction(0);  // target prediction is outside assignment scope
-        if (!u_.conditional) return &u_;
-
-        u_.bimodal_index = b.address & (BIMODAL_ENTRIES - 1);
-        const unsigned hash = (b.address ^ history_) & 32767u;
-        u_.global_set = hash >> TAG_BITS;
-        u_.tag = hash & 63u;
-        u_.bimodal_prediction = bimodal_[u_.bimodal_index] >= 2;
-        bool prediction = u_.bimodal_prediction;
-        for (unsigned w = 0; w < ways_; ++w) {
-            const entry &e = global_[u_.global_set][w];
-            if (e.valid && e.tag == u_.tag) {
-                u_.hit_way = static_cast<int>(w);
-                prediction = e.counter >= 2;
+        u = pm_update();
+        u.conditional = (b.br_flags & BR_CONDITIONAL) != 0;
+        u.target_prediction(0); // target prediction is outside the assignment
+        if (!u.conditional) {
+            u.direction_prediction(true);
+            return &u;
+        }
+        const unsigned int pc = b.address >> pc_shift;
+        u.index = pc & bimodal_mask;
+        const unsigned int hash = (pc ^ history) & history_mask;
+        u.row = (hash >> tag_bits) & row_mask;
+        u.tag = hash & tag_mask;
+        for (int way = 0; way < 2; ++way) {
+            const global_entry &entry = global[u.row].ways[way];
+            if (entry.valid && entry.tag == u.tag) {
+                u.way = way;
                 break;
             }
         }
-        u_.direction_prediction(prediction);
-        return &u_;
+        const unsigned char counter = (u.way >= 0)
+            ? global[u.row].ways[u.way].counter : bimodal[u.index];
+        u.direction_prediction(counter >= 2);
+        return &u;
     }
 
-    void update(branch_update *u, bool taken, unsigned int) override {
-        const auto &s = *static_cast<pm_update *>(u);
-        if (!s.conditional) return;
-
-        // Always train the fallback, using the prediction-time index.
-        train_counter(bimodal_[s.bimodal_index], taken);
-        auto &entries = global_[s.global_set];
-        if (s.hit_way >= 0) {
-            ++stats_.global_hits;
-            const unsigned w = static_cast<unsigned>(s.hit_way);
-            train_counter(entries[w].counter, taken);
-            touch(s.global_set, w, false);
+    void update(branch_update *result, bool taken,
+                unsigned int /*target*/) override {
+        const pm_update &lookup = *static_cast<pm_update *>(result);
+        if (!lookup.conditional) return;
+        train(bimodal[lookup.index], taken);
+        int way = lookup.way;
+        if (way < 0) {
+            // Fill an invalid way first; otherwise evict the least recent way.
+            if (!global[lookup.row].ways[0].valid) way = 0;
+            else if (!global[lookup.row].ways[1].valid) way = 1;
+            else way = lru[lookup.row];
+            global_entry &entry = global[lookup.row].ways[way];
+            entry.valid = true;
+            entry.tag = lookup.tag;
+            entry.counter = taken ? 2 : 1; // fresh weak state, no stale bias
         } else {
-            ++stats_.global_misses;
-            ++stats_.allocations;
-            unsigned victim = ways_;
-            for (unsigned w = 0; w < ways_; ++w) {
-                if (!entries[w].valid) { victim = w; break; }
-            }
-            const bool replacing = victim == ways_;
-            if (replacing) {
-                victim = 0;
-                for (unsigned w = 1; w < ways_; ++w)
-                    if (entries[w].rank > entries[victim].rank) victim = w;
-                ++stats_.replacements;
-            }
-            // New contexts begin weakly biased toward the observed outcome.
-            // Never reuse the old victim's counter for a different tag.
-            touch(s.global_set, victim, !replacing);
-            entries[victim].valid = true;
-            entries[victim].tag = static_cast<std::uint8_t>(s.tag);
-            entries[victim].counter = taken ? 2 : 1;
+            train(global[lookup.row].ways[way].counter, taken);
         }
-        // Train before shifting history; the current outcome cannot affect
-        // its own prediction. Unconditional branches do not enter this GHR.
-        history_ = ((history_ << 1) | unsigned(taken)) & 32767u;
-    }
-
-    const pm_statistics &stats() const { return stats_; }
-    // Ideal packed hardware bits, excluding C++ padding and simulator metadata.
-    std::uint64_t logical_storage_bits() const {
-        const unsigned lru_bits_per_set = ways_ == 2 ? 1 : 8;
-        return 4096ull * 2 + 512ull * ways_ * (1 + 6 + 2)
-             + 512ull * lru_bits_per_set + 15;
-    }
-    // Read-only inspection for deterministic algorithm tests.
-    unsigned history() const { return history_; }
-    unsigned ways() const { return ways_; }
-    unsigned bimodal_counter(unsigned index) const { return bimodal_.at(index); }
-    const entry &global_entry(unsigned set, unsigned way) const {
-        if (way >= ways_) throw std::out_of_range("inactive way");
-        return global_.at(set).at(way);
+        lru[lookup.row] = static_cast<unsigned char>(1 - way);
+        history = ((history << 1) | static_cast<unsigned int>(taken))
+                  & history_mask;
     }
 };
+
+// Controls used only for the comparison experiments.
+class always_taken_predictor : public branch_predictor {
+    branch_update u;
+public:
+    branch_update *predict(branch_info &) override {
+        u.direction_prediction(true);
+        u.target_prediction(0);
+        return &u;
+    }
+};
+
+class bimodal_predictor : public branch_predictor {
+    pm_update u;
+    unsigned char counters[4096];
+public:
+    bimodal_predictor() { std::memset(counters, 1, sizeof(counters)); }
+    branch_update *predict(branch_info &b) override {
+        u.conditional = (b.br_flags & BR_CONDITIONAL) != 0;
+        u.index = b.address & 4095u;
+        u.direction_prediction(!u.conditional || counters[u.index] >= 2);
+        u.target_prediction(0);
+        return &u;
+    }
+    void update(branch_update *result, bool taken, unsigned int) override {
+        const pm_update &lookup = *static_cast<pm_update *>(result);
+        if (lookup.conditional) pm_predictor::train(counters[lookup.index], taken);
+    }
+};
+
+//
+// Optional extra-credit starter placeholder - not implemented in this submission
+// Complete Pentium M branch predictors for extra credit
+// This class implements the complete Pentium M branch prediction units. 
+// It implements both branch target prediction and branch outcome predicton. 
+class cpm_update : public branch_update {
+public:
+        unsigned int index;
+};
+
+class cpm_predictor : public branch_predictor {
+public:
+        cpm_update u;
+
+        cpm_predictor (void) {
+        }
+
+        branch_update *predict (branch_info & /*b*/) {
+            u.direction_prediction (true);
+            u.target_prediction (0);
+            return &u;
+        }
+
+        void update (branch_update *, bool, unsigned int) {
+        }
+
+};
+
+
 
 #endif

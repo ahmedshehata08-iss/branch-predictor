@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""Portable replacement for the supplied csh runner.
-
-./run traces [--jobs 2] runs the default five-predictor comparison.
-Additional arguments are forwarded to scripts/run_experiments.py.
-"""
+"""Author: Ahmed Ahmed. Portable replacement for the supplied csh/dc runner."""
 import pathlib
 import subprocess
 import sys
-
-root = pathlib.Path(__file__).resolve().parent
-arguments = sys.argv[1:]
-if arguments and not arguments[0].startswith("-"):
-    arguments = ["--trace-dir", arguments[0]] + arguments[1:]
-raise SystemExit(subprocess.call(
-    [sys.executable, str(root / "scripts" / "run_experiments.py")] + arguments
-))
+if len(sys.argv) not in (2,3):
+    sys.exit('Usage: ./run TRACE_DIRECTORY [pm|bimodal|gshare|always_taken]')
+root=pathlib.Path(__file__).resolve().parent
+traces=sorted(pathlib.Path(sys.argv[1]).rglob('*.trace.*'))
+if not traces: sys.exit('No trace files found')
+mode=sys.argv[2] if len(sys.argv)==3 else 'pm'
+values=[]
+for trace in traces:
+    result=subprocess.run([str(root/'src/predict'),str(trace),mode,'--stats'],
+                          check=True,capture_output=True,text=True)
+    import json
+    value=json.loads(result.stdout.splitlines()[0])['mpki']
+    values.append(value)
+    print(f'{str(trace):55s} {value:.3f}',flush=True)
+print(f'average MPKI: {sum(values)/len(values):.3f}')
